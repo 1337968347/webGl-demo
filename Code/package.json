@@ -1,0 +1,15 @@
+{
+  "name": "WideScreen ",
+  "version": "1.0.0",
+  "description": "Demo application for KFFUYUNYIN",
+  "main": "home-sz.html",
+  "scripts": {
+    "start": "http-server -o",
+    "build": "gulp build"
+  },
+  "author": "Caohong",
+  "license": "CC-BY-NC-ND-4.0",
+  "dependencies": {
+    "http-server": "^0.9.0"
+  }
+}
