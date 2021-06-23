@@ -32,17 +32,19 @@ main()
     vec3 L;
     
     // check for directional light
-    
+    // x y z w 
+    // w === 0 代表这个光源是一个远距离光源 
+    // 如果是远距离光源，那么光线的位置就是光线的方向
     if(lightPosition.w == 0.0) L = normalize(lightPosition.xyz);
     else L = normalize( lightPosition.xyz - pos );
 
     // Because the eye point the is at the orgin
     // the vector from the vertex position to the eye is
-    	
+    // 观察向量
     vec3 E = -normalize( pos );
     
     // halfway vector
-    
+    // 半角向量
     vec3 H = normalize( L + E );
 
     // Transform vertex normal into eye coordinates
@@ -51,15 +53,16 @@ main()
     
     // as long as there is no nonuniform scaling 
     // we don't need the normal matrix and can use
-    
+    // 平面法向量
     vec3 N = normalize((modelViewMatrix*vNormal).xyz);
 
     // Compute terms in the illumination equation
+    // 环境光反射
     vec4 ambient = ambientProduct;
-
+    // 漫反射 光线跟平面的夹角
     float Kd = max( dot(L, N), 0.0 );
     vec4  diffuse = Kd*diffuseProduct;
-
+    // 镜面反射 =  半角向量 跟 法向量 的余弦值的 n次方 *  光线效果 * 距离
     float Ks = pow( max(dot(N, H), 0.0), shininess );
     vec4  specular = Ks * specularProduct;
     
@@ -71,7 +74,7 @@ main()
     
     fColor = ambient + diffuse +specular;
 
-    fColor.a = 1.0;
+    fColor.a = 0.9;
 }
 </script>
 

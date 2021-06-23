@@ -57,7 +57,7 @@ window.onload = function init() {
     // color square red and shadow black
     
     red = vec4(1.0, 0.0, 0.0, 1.0);
-    black = vec4(0.0, 0.0, 0.0, 1.0);
+    black = vec4(0.0, 1.0, 0.0, 1.0);
     
     // square
     
@@ -119,8 +119,7 @@ var render = function() {
 
         modelViewMatrix = mult(modelViewMatrix, translate(light[0], light[1], light[2]));
         modelViewMatrix = mult(modelViewMatrix, m);
-        modelViewMatrix = mult(modelViewMatrix, translate(-light[0], -light[1], 
-           -light[2]));
+        modelViewMatrix = mult(modelViewMatrix, translate(-light[0], -light[1], -light[2]));
 
         // send color and matrix for shadow
         
