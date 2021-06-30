@@ -10,8 +10,8 @@ var texSize = 64;
 var program;
 
 var pointsArray = [];
-var colorsArray = [];
 var texCoordsArray = [];
+var normalsArray = [];
 
 var texture;
 
@@ -32,6 +32,7 @@ var vertices = [
     vec4( 0.5,  0.5, -0.5, 1.0 ),
     vec4( 0.5, -0.5, -0.5, 1.0 )
 ];
+
 
 var vertexColors = [
     vec4( 0.0, 0.0, 0.0, 1.0 ),  // black
@@ -58,39 +59,47 @@ function configureTexture( image ) {
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGB, 
          gl.RGB, gl.UNSIGNED_BYTE, image );
-    gl.generateMipmap( gl.TEXTURE_2D );
+
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, 
-                      gl.NEAREST_MIPMAP_LINEAR );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+                      gl.LINEAR );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
     
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.uniform1i(gl.getUniformLocation(program, "texture"), 0);
 }
 
 
 function quad(a, b, c, d) {
-     pointsArray.push(vertices[a]); 
-     colorsArray.push(vertexColors[a]); 
+
+    var t1 = subtract(vertices[b], vertices[a]);
+    var t2 = subtract(vertices[c], vertices[b]);
+    var normal = cross(t1, t2);
+    var normal = vec3(normal);
+
+     pointsArray.push(vertices[a]);
      texCoordsArray.push(texCoord[0]);
+     normalsArray.push(normal)
 
      pointsArray.push(vertices[b]); 
-     colorsArray.push(vertexColors[a]);
      texCoordsArray.push(texCoord[1]); 
+     normalsArray.push(normal)
 
      pointsArray.push(vertices[c]); 
-     colorsArray.push(vertexColors[a]);
      texCoordsArray.push(texCoord[2]); 
+     normalsArray.push(normal)
    
      pointsArray.push(vertices[a]); 
-     colorsArray.push(vertexColors[a]);
      texCoordsArray.push(texCoord[0]); 
+     normalsArray.push(normal)
 
      pointsArray.push(vertices[c]); 
-     colorsArray.push(vertexColors[a]);
      texCoordsArray.push(texCoord[2]); 
+     normalsArray.push(normal)
 
      pointsArray.push(vertices[d]); 
-     colorsArray.push(vertexColors[a]);
-     texCoordsArray.push(texCoord[3]);   
+     texCoordsArray.push(texCoord[3]); 
+     normalsArray.push(normal)  
 }
 
 
@@ -125,14 +134,6 @@ window.onload = function init() {
     
     colorCube();
 
-    var cBuffer = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(colorsArray), gl.STATIC_DRAW );
-    
-    var vColor = gl.getAttribLocation( program, "vColor" );
-    gl.vertexAttribPointer( vColor, 4, gl.FLOAT, false, 0, 0 );
-    gl.enableVertexAttribArray( vColor );
-
     var vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW );
@@ -148,6 +149,14 @@ window.onload = function init() {
     var vTexCoord = gl.getAttribLocation( program, "vTexCoord" );
     gl.vertexAttribPointer( vTexCoord, 2, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vTexCoord );
+
+    var NBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, NBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW );
+    
+    var vNormal = gl.getAttribLocation( program, "vNormal" );
+    gl.vertexAttribPointer( vNormal, 2, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray( vNormal );
 
     //
     // Initialize a texture
@@ -176,7 +185,7 @@ window.onload = function init() {
 
 var render = function(){
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    theta[axis] += 2.0;
+    theta[axis] += 1.0;
     gl.uniform3fv(thetaLoc, flatten(theta));
     gl.drawArrays( gl.TRIANGLES, 0, numVertices );
     requestAnimFrame(render);

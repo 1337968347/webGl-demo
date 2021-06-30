@@ -3,7 +3,7 @@
 var canvas;
 var gl;
 
-var numTimesToSubdivide = 3;
+var numTimesToSubdivide = 5;
  
 var index = 0;
 
@@ -28,14 +28,15 @@ var vb = vec4(0.0, 0.942809, 0.333333, 1);
 var vc = vec4(-0.816497, -0.471405, 0.333333, 1);
 var vd = vec4(0.816497, -0.471405, 0.333333,1);
     
-var lightPosition = vec4(1.0, 1.0, 1.0, 0.0 );
+var lightPosition = vec4(1.0, 1.0, 0.0, 0.0 );
+
 var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
 
-var materialAmbient = vec4( 1.0, 0.0, 1.0, 1.0 );
+var materialAmbient = vec4( 1.0, 1.0, 1.0, 1.0 );
 var materialDiffuse = vec4( 1.0, 0.8, 0.0, 1.0 );
-var materialSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
+var materialSpecular = vec4( 1.0, 0.5, 0.5, 1.0 );
 var materialShininess = 20.0;
 
 var ctm;
@@ -43,8 +44,6 @@ var ambientColor, diffuseColor, specularColor;
 
 var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
-
-var normalMatrix, normalMatrixLoc;
 
 var eye;
 var at = vec3(0.0, 0.0, 0.0);
@@ -142,7 +141,6 @@ window.onload = function init() {
     
     modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
     projectionMatrixLoc = gl.getUniformLocation( program, "projectionMatrix" );
-    normalMatrixLoc = gl.getUniformLocation( program, "normalMatrix" );
 
     document.getElementById("Button0").onclick = function(){radius *= 2.0;};
     document.getElementById("Button1").onclick = function(){radius *= 0.5;};
@@ -195,16 +193,9 @@ function render() {
     // normal matrix only really need if there is nonuniform scaling
     // it's here for generality but since there is
     // no scaling in this example we could just use modelView matrix in shaders
-    
-    normalMatrix = [
-        vec3(modelViewMatrix[0][0], modelViewMatrix[0][1], modelViewMatrix[0][2]),
-        vec3(modelViewMatrix[1][0], modelViewMatrix[1][1], modelViewMatrix[1][2]),
-        vec3(modelViewMatrix[2][0], modelViewMatrix[2][1], modelViewMatrix[2][2])
-    ];
             
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix) );
-    gl.uniformMatrix3fv(normalMatrixLoc, false, flatten(normalMatrix) );
         
     for( var i=0; i<index; i+=3) 
         gl.drawArrays( gl.TRIANGLES, i, 3 );

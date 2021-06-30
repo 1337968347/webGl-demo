@@ -3,7 +3,7 @@
 var canvas;
 var gl;
 
-var numTimesToSubdivide = 3;
+var numTimesToSubdivide = 5;
  
 var index = 0; 
 

@@ -52,8 +52,11 @@ void main()
 
     fColor = ambient + diffuse +specular;
     fColor.a = 1.0;
-
-    gl_FragColor = fColor;
+    if(abs(dot(E, N))< 0.01){
+        gl_FragColor = vec4(1.0,1.0,1.0,1.0);
+    }else{
+        gl_FragColor = fColor;
+    }
 }
 </script>
 <p> </p>
