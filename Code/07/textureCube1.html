@@ -4,12 +4,9 @@
     canvas { background: blue; }
 </style>
 
-<button id = "ButtonX">Rotate X</button>
-<button id = "ButtonY">Rotate Y</button>
-<button id = "ButtonZ">Rotate Z</button>
-
-
-
+<button id = "ButtonX">X</button>
+<button id = "ButtonY">Y</button>
+<button id = "ButtonZ">Z</button>
 
 <script id="vertex-shader" type="x-shader/x-vertex">
 
@@ -18,77 +15,53 @@ attribute vec4 vNormal;
 attribute  vec2 vTexCoord;
 
 varying vec2 fTexCoord;
-varying vec4 fColor;
-uniform vec3 theta;
+varying vec3 N, L, E;
+uniform mat4 modelViewMatrix;
 
 void main() 
 {
-    // 顶点处理
-    vec3 angles = radians( theta );
-    vec3 c = cos( angles );
-    vec3 s = sin( angles );
-
-    mat4 rx = mat4( 1.0,  0.0,  0.0, 0.0,
-		    0.0,  c.x,  s.x, 0.0,
-		    0.0, -s.x,  c.x, 0.0,
-		    0.0,  0.0,  0.0, 1.0 );
-
-    mat4 ry = mat4( c.y, 0.0, -s.y, 0.0,
-		    0.0, 1.0,  0.0, 0.0,
-		    s.y, 0.0,  c.y, 0.0,
-		    0.0, 0.0,  0.0, 1.0 );
-
-    mat4 rz = mat4( c.z, -s.z, 0.0, 0.0,
-		    s.z,  c.z, 0.0, 0.0,
-		    0.0,  0.0, 1.0, 0.0,
-		    0.0,  0.0, 0.0, 1.0 );
 
     fTexCoord = vTexCoord;
+    vec4 lightPosition = vec4(1.0, 0.0, 0.0, 0.0);
 
-    // phong 光线反射模型
-    vec3 pos = vPosition.xyz;
-    vec3 L = vec3(1.0, 0.0, 0.0);
-    vec3 E = -normalize( pos );
-    // 半角向量
-    vec3 H = normalize( L + E );
-
-    vec3 N = normalize( vNormal.xyz);
-    // 环境光反射
-    vec4 ambient = vec4(1.0,1.0,1.0,1.0) * vec4(0.5,0.5,0.5,1.0);
-
-    // 漫反射
-    float Kd = max( dot(L, N), 0.0 );
-    vec4  diffuse = Kd * vec4(1.0,1.0,1.0,1.0) * vec4(0.5,0.5,0.5,1.0);
-
-    // 镜面反射
-    float Ks = pow( max(dot(N, H), 0.0), 10.0 );
-    vec4  specular = Ks *  vec4(1.0,1.0,1.0,1.0) * vec4(1.0,1.0,1.0,1.0);
+    vec3 pos = (modelViewMatrix * vPosition).xyz;
     
-    if( dot(L, N) < 0.0 ) {
-	specular = vec4(0.0, 0.0, 0.0, 1.0);
-    } 
-    fColor = ambient + diffuse +specular;
-
-    fColor.a = 1.0;
-
-    gl_Position = rz * ry * rx * vPosition;
+    if(lightPosition.w == 0.0) L = normalize(lightPosition.xyz);
+    else L = normalize( lightPosition.xyz - pos );
     
-    
+    E =  -normalize(pos);
+    N = normalize( modelViewMatrix * vNormal).xyz;
 
+    gl_Position = modelViewMatrix * vPosition;
 } 
 </script>
 
 <script id="fragment-shader" type="x-shader/x-fragment">
 
 precision mediump float;
-varying vec4 fColor;
 varying  vec2 fTexCoord;
-
+varying vec3 N, L, E;
 uniform sampler2D texture;
 
 void
 main()
 {
+    vec4 fColor;
+    
+    vec3 H = normalize( L + E );
+    vec4 ambient = vec4(0.4,0.4,0.4,1.0);
+
+    float Kd = max( dot(L, N), 0.0 );
+    vec4  diffuse = Kd * vec4(2.0,2.0,2.0,1.0) ;
+
+    float Ks = pow( max(dot(N, H), 0.0), 30.0 );
+    vec4  specular = Ks * vec4(1.0,1.0,1.0,1.0) ;
+    
+    if( dot(L, N) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+    fColor = ambient + diffuse +specular;
+    fColor.a = 1.0;
+
     gl_FragColor = fColor * texture2D( texture, fTexCoord );
 }
 </script>
@@ -103,6 +76,6 @@ main()
 <canvas id="gl-canvas" width="512" height="512">
 Oops ... your browser doesn't support the HTML5 canvas element
 </canvas>
-<img id = "texImage" src = "liuliang.jpg" hidden></img>
+<img id = "texImage" src = "green.png" hidden></img>
 </body>
 </html>
