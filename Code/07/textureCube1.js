@@ -13,18 +13,19 @@ var normalsArray = [];
 
 var texture;
 var modelView;
+var projectionMatrix;
 
 var texCoord = [vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0)];
 
 var vertices = [
+  vec4(-0.5, -0.5, 1.5, 1.0),
+  vec4(-0.5, 0.5, 1.5, 1.0),
+  vec4(0.5, 0.5, 1.5, 1.0),
+  vec4(0.5, -0.5, 1.5, 1.0),
   vec4(-0.5, -0.5, 0.5, 1.0),
   vec4(-0.5, 0.5, 0.5, 1.0),
   vec4(0.5, 0.5, 0.5, 1.0),
   vec4(0.5, -0.5, 0.5, 1.0),
-  vec4(-0.5, -0.5, -0.5, 1.0),
-  vec4(-0.5, 0.5, -0.5, 1.0),
-  vec4(0.5, 0.5, -0.5, 1.0),
-  vec4(0.5, -0.5, -0.5, 1.0),
 ];
 
 var vertexColors = [
@@ -37,12 +38,6 @@ var vertexColors = [
   vec4(0.0, 1.0, 1.0, 1.0), // white
   vec4(0.0, 1.0, 1.0, 1.0), // cyan
 ];
-
-var xAxis = 0;
-var yAxis = 1;
-var zAxis = 2;
-var axis = xAxis;
-var theta = [45.0, 45.0, 45.0];
 
 var thetaLoc;
 
@@ -158,29 +153,21 @@ window.onload = function init() {
 
   configureTexture(image);
 
-  thetaLoc = gl.getUniformLocation(program, "theta");
+  projectionMatrix = perspective(100, 1, 0.2, 4);
 
-  document.getElementById("ButtonX").onclick = function () {
-    axis = xAxis;
-  };
-  document.getElementById("ButtonY").onclick = function () {
-    axis = yAxis;
-  };
-  document.getElementById("ButtonZ").onclick = function () {
-    axis = zAxis;
-  };
+  gl.uniformMatrix4fv(
+    gl.getUniformLocation(program, "projectionMatrix"),
+    false,
+    flatten(projectionMatrix)
+  );
 
   render();
 };
 
 var render = function () {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  theta[axis] += 1.0;
 
-  modelView = mat4();
-  modelView = mult(modelView, rotate(theta[xAxis], [1, 0, 0]));
-  modelView = mult(modelView, rotate(theta[yAxis], [0, 1, 0]));
-  modelView = mult(modelView, rotate(theta[zAxis], [0, 0, 1]));
+  modelView = lookAt(vec3(1.0, 1.0, 2.0), vec3(0, 0, 0), vec3(0.0, 1.0, 0.0));
   gl.uniformMatrix4fv(
     gl.getUniformLocation(program, "modelViewMatrix"),
     false,
