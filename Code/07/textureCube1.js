@@ -15,6 +15,10 @@ var texture;
 var modelView;
 var projectionMatrix;
 
+var position = [0 ,0, 3];
+// w a d s
+var moveDirection = "";
+
 var texCoord = [vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0)];
 
 var vertices = [
@@ -139,21 +143,20 @@ window.onload = function init() {
   gl.vertexAttribPointer(vNormal, 4, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(vNormal);
 
-  //
-  // Initialize a texture
-  //
-
-  //var image = new Image();
-  //image.onload = function() {
-  //   configureTexture( image );
-  //}
-  //image.src = "SA2011_black.gif"
-
   var image = document.getElementById("texImage");
 
   configureTexture(image);
 
-  projectionMatrix = perspective(100, 1, 0.2, 4);
+  document.onkeydown = (e) => {
+    console.log(e)
+    moveDirection = e.key+ ''
+  };
+
+  document.onkeyup = (e) => {
+    moveDirection = ''
+  };
+
+  projectionMatrix = perspective(100, 1, 0.1, 2);
 
   gl.uniformMatrix4fv(
     gl.getUniformLocation(program, "projectionMatrix"),
@@ -167,7 +170,23 @@ window.onload = function init() {
 var render = function () {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  modelView = lookAt(vec3(1.0, 1.0, 2.0), vec3(0, 0, 0), vec3(0.0, 1.0, 0.0));
+  if(moveDirection === 'a'){
+    position[0] -= 0.01;
+  }
+  if(moveDirection === 'w'){
+    position[2] -= 0.01;
+  }
+  if(moveDirection === 'd'){
+    position[0] += 0.01;
+  }
+  if(moveDirection === 's'){
+    position[2] += 0.01;
+  }
+  if(moveDirection === ' '){
+    position[1] += 0.01;
+  }
+
+  modelView = lookAt(vec3(position[0], position[1], position[2]), vec3(position[0], position[1], position[2]-0.001), vec3(0.0, 1.0, 0.0));
   gl.uniformMatrix4fv(
     gl.getUniformLocation(program, "modelViewMatrix"),
     false,
