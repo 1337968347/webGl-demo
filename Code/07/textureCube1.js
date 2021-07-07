@@ -1,9 +1,8 @@
 var canvas;
 var gl;
 
-var numVertices = 36;
-
-var texSize = 64;
+var numTimesToSubdivide = 5;
+var numVertices = 0;
 
 var program;
 
@@ -15,33 +14,19 @@ var texture;
 var modelView;
 var projectionMatrix;
 
-var position = [0 ,0, 3];
+var va = vec4(0.0, 0.0, -1.0, 1);
+var vb = vec4(0.0, 0.942809, 0.333333, 1);
+var vc = vec4(-0.816497, -0.471405, 0.333333, 1);
+var vd = vec4(0.816497, -0.471405, 0.333333, 1);
+
+var theta = 0.0;
+var phi = 0.0;
+
+var position = [0, 0, 1];
 // w a d s
 var moveDirection = "";
 
-var texCoord = [vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0)];
-
-var vertices = [
-  vec4(-0.5, -0.5, 1.5, 1.0),
-  vec4(-0.5, 0.5, 1.5, 1.0),
-  vec4(0.5, 0.5, 1.5, 1.0),
-  vec4(0.5, -0.5, 1.5, 1.0),
-  vec4(-0.5, -0.5, 0.5, 1.0),
-  vec4(-0.5, 0.5, 0.5, 1.0),
-  vec4(0.5, 0.5, 0.5, 1.0),
-  vec4(0.5, -0.5, 0.5, 1.0),
-];
-
-var vertexColors = [
-  vec4(0.0, 0.0, 0.0, 1.0), // black
-  vec4(1.0, 0.0, 0.0, 1.0), // red
-  vec4(1.0, 1.0, 0.0, 1.0), // yellow
-  vec4(0.0, 1.0, 0.0, 1.0), // green
-  vec4(0.0, 0.0, 1.0, 1.0), // blue
-  vec4(1.0, 0.0, 1.0, 1.0), // magenta
-  vec4(0.0, 1.0, 1.0, 1.0), // white
-  vec4(0.0, 1.0, 1.0, 1.0), // cyan
-];
+var texCoord = [];
 
 var thetaLoc;
 
@@ -59,43 +44,63 @@ function configureTexture(image) {
   gl.uniform1i(gl.getUniformLocation(program, "texture"), 0);
 }
 
-function quad(a, b, c, d) {
-  var t1 = subtract(vertices[b], vertices[a]);
-  var t2 = subtract(vertices[c], vertices[b]);
-  var normal = vec4(cross(t1, t2));
+function triangle(a, b, c) {
+  
 
-  pointsArray.push(vertices[a]);
-  texCoordsArray.push(texCoord[0]);
-  normalsArray.push(normal);
+  normalsArray.push(a);
+  normalsArray.push(b);
+  normalsArray.push(c);
+  pointsArray.push(a);
+  calcTexCoords(a);
+  pointsArray.push(b);
+  calcTexCoords(b);
+  pointsArray.push(c);
+  calcTexCoords(c);
 
-  pointsArray.push(vertices[b]);
-  texCoordsArray.push(texCoord[1]);
-  normalsArray.push(normal);
-
-  pointsArray.push(vertices[c]);
-  texCoordsArray.push(texCoord[2]);
-  normalsArray.push(normal);
-
-  pointsArray.push(vertices[a]);
-  texCoordsArray.push(texCoord[0]);
-  normalsArray.push(normal);
-
-  pointsArray.push(vertices[c]);
-  texCoordsArray.push(texCoord[2]);
-  normalsArray.push(normal);
-
-  pointsArray.push(vertices[d]);
-  texCoordsArray.push(texCoord[3]);
-  normalsArray.push(normal);
+  numVertices += 3;
 }
 
-function colorCube() {
-  quad(1, 0, 3, 2);
-  quad(2, 3, 7, 6);
-  quad(3, 0, 4, 7);
-  quad(6, 5, 1, 2);
-  quad(4, 5, 6, 7);
-  quad(5, 4, 0, 1);
+function calcTexCoords(position) {
+  const f =
+    2 *
+    Math.sqrt(
+      position[0] * position[0] +
+        position[1] * position[1] +
+        (position[2] + 1) * (position[2] + 1)
+    );
+  if (f == 0) {
+    texCoordsArray.push(vec2(0, 0));
+    return;
+  }
+  const s = position[0] / f + 0.5;
+  const t = position[1] / f + 0.5;
+  texCoordsArray.push(vec2(s, t));
+}
+
+function divideTriangle(a, b, c, count) {
+  if (count > 0) {
+    var ab = mix(a, b, 0.5);
+    var ac = mix(a, c, 0.5);
+    var bc = mix(b, c, 0.5);
+
+    ab = normalize(ab, true);
+    ac = normalize(ac, true);
+    bc = normalize(bc, true);
+
+    divideTriangle(a, ab, ac, count - 1);
+    divideTriangle(ab, b, bc, count - 1);
+    divideTriangle(bc, c, ac, count - 1);
+    divideTriangle(ab, bc, ac, count - 1);
+  } else {
+    triangle(a, b, c);
+  }
+}
+
+function tetrahedron(a, b, c, d, n) {
+  divideTriangle(a, b, c, n);
+  divideTriangle(d, c, b, n);
+  divideTriangle(a, d, b, n);
+  divideTriangle(a, c, d, n);
 }
 
 window.onload = function init() {
@@ -116,8 +121,7 @@ window.onload = function init() {
   //
   program = initShaders(gl, "vertex-shader", "fragment-shader");
   gl.useProgram(program);
-
-  colorCube();
+  tetrahedron(va, vb, vc, vd, numTimesToSubdivide);
 
   var vBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
@@ -148,12 +152,11 @@ window.onload = function init() {
   configureTexture(image);
 
   document.onkeydown = (e) => {
-    console.log(e)
-    moveDirection = e.key+ ''
+    moveDirection = e.key + "";
   };
 
   document.onkeyup = (e) => {
-    moveDirection = ''
+    moveDirection = "";
   };
 
   projectionMatrix = perspective(100, 1, 0.1, 2);
@@ -170,29 +173,39 @@ window.onload = function init() {
 var render = function () {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  if(moveDirection === 'a'){
+  if (moveDirection === "a") {
     position[0] -= 0.01;
   }
-  if(moveDirection === 'w'){
+  if (moveDirection === "w") {
     position[2] -= 0.01;
   }
-  if(moveDirection === 'd'){
+  if (moveDirection === "d") {
     position[0] += 0.01;
   }
-  if(moveDirection === 's'){
+  if (moveDirection === "s") {
     position[2] += 0.01;
   }
-  if(moveDirection === ' '){
+  if (moveDirection === " ") {
     position[1] += 0.01;
   }
+  theta +=0.01
+  var eye = vec3(
+     Math.sin(theta) * Math.cos(phi),
+     Math.sin(theta) * Math.sin(phi),
+    Math.cos(theta)
+  );
 
-  modelView = lookAt(vec3(position[0], position[1], position[2]), vec3(position[0], position[1], position[2]-0.001), vec3(0.0, 1.0, 0.0));
+  modelView = lookAt(
+    eye,
+    vec3(0.0,0.0,0.0),
+    vec3(0.0, 1.0, 0.0)
+  );
+
   gl.uniformMatrix4fv(
     gl.getUniformLocation(program, "modelViewMatrix"),
     false,
     flatten(modelView)
   );
-
   gl.drawArrays(gl.TRIANGLES, 0, numVertices);
-  requestAnimFrame(render);
+  requestAnimationFrame(render)
 };
