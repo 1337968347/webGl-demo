@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html>
   <style type="text/css">
-    canvas {
-      background: blue;
-    }
   </style>
 
   <script id="vertex-shader" type="x-shader/x-vertex">
@@ -60,7 +57,7 @@
         fColor = ambient  + diffuse;
         fColor.a = 1.0;
 
-        gl_FragColor = fColor * texture2D( texture, fTexCoord );
+        gl_FragColor = texture2D( texture, fTexCoord );
     }
   </script>
 

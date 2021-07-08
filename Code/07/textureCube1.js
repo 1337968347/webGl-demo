@@ -1,7 +1,7 @@
 var canvas;
 var gl;
 
-var numTimesToSubdivide = 5;
+var numTimesToSubdivide = 3;
 var numVertices = 0;
 
 var program;
@@ -45,8 +45,6 @@ function configureTexture(image) {
 }
 
 function triangle(a, b, c) {
-  
-
   normalsArray.push(a);
   normalsArray.push(b);
   normalsArray.push(c);
@@ -60,26 +58,23 @@ function triangle(a, b, c) {
   numVertices += 3;
 }
 
+let sMax = 2;
+let tMax = 2;
 function calcTexCoords(position) {
-  const f =
-    2 *
-    Math.sqrt(
-      position[0] * position[0] +
-        position[1] * position[1] +
-        (position[2] + 1) * (position[2] + 1)
-    );
-  if (f == 0) {
-    texCoordsArray.push(vec2(0, 0));
-    return;
-  }
-  const s = position[0] / f + 0.5;
-  const t = position[1] / f + 0.5;
+  const sAtan2 = Math.atan2(position[0], position[2]) / Math.PI;
+
+  const sThe = sAtan2 < 0 ? sAtan2 + 2 : sAtan2;
+  const s = sThe / 2;
+  sMax = Math.min(s, sMax);
+  const t = Math.asin(position[1]) / Math.PI + 0.5;
+  tMax = Math.min(t, tMax);
   texCoordsArray.push(vec2(s, t));
 }
 
 function divideTriangle(a, b, c, count) {
   if (count > 0) {
     var ab = mix(a, b, 0.5);
+    7;
     var ac = mix(a, c, 0.5);
     var bc = mix(b, c, 0.5);
 
@@ -105,6 +100,8 @@ function tetrahedron(a, b, c, d, n) {
 
 window.onload = function init() {
   canvas = document.getElementById("gl-canvas");
+  canvas.width = (Math.min(window.innerWidth, window.innerHeight) * 2) / 3;
+  canvas.height = canvas.width;
 
   gl = WebGLUtils.setupWebGL(canvas);
   if (!gl) {
@@ -122,7 +119,7 @@ window.onload = function init() {
   program = initShaders(gl, "vertex-shader", "fragment-shader");
   gl.useProgram(program);
   tetrahedron(va, vb, vc, vd, numTimesToSubdivide);
-
+  console.log(sMax, tMax);
   var vBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
@@ -188,18 +185,14 @@ var render = function () {
   if (moveDirection === " ") {
     position[1] += 0.01;
   }
-  theta +=0.01
+  theta += 0.01;
   var eye = vec3(
-     Math.sin(theta) * Math.cos(phi),
-     Math.sin(theta) * Math.sin(phi),
+    Math.sin(theta) * Math.cos(phi),
+    Math.sin(theta) * Math.sin(phi),
     Math.cos(theta)
   );
 
-  modelView = lookAt(
-    eye,
-    vec3(0.0,0.0,0.0),
-    vec3(0.0, 1.0, 0.0)
-  );
+  modelView = lookAt(eye, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
 
   gl.uniformMatrix4fv(
     gl.getUniformLocation(program, "modelViewMatrix"),
@@ -207,5 +200,5 @@ var render = function () {
     flatten(modelView)
   );
   gl.drawArrays(gl.TRIANGLES, 0, numVertices);
-  requestAnimationFrame(render)
+  requestAnimationFrame(render);
 };
