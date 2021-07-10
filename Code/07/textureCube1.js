@@ -1,7 +1,7 @@
 var canvas;
 var gl;
 
-var numTimesToSubdivide = 3;
+var numTimesToSubdivide = 4;
 var numVertices = 0;
 
 var program;
@@ -36,8 +36,8 @@ function configureTexture(image) {
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
 
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -48,27 +48,45 @@ function triangle(a, b, c) {
   normalsArray.push(a);
   normalsArray.push(b);
   normalsArray.push(c);
-  pointsArray.push(a);
-  calcTexCoords(a);
-  pointsArray.push(b);
-  calcTexCoords(b);
-  pointsArray.push(c);
-  calcTexCoords(c);
 
+  pointsArray.push(a);
+  pointsArray.push(b);
+  pointsArray.push(c);
+
+  calcTexCoords(a, b, c);
   numVertices += 3;
 }
 
-let sMax = 2;
-let tMax = 2;
-function calcTexCoords(position) {
-  const sAtan2 = Math.atan2(position[0], position[2]) / Math.PI;
+/**
+ * 三角形顶点
+ * @param {*} a
+ * @param {*} b
+ * @param {*} c
+ */
+function calcTexCoords(a, b, c) {
+  const [ax, ay, az] = a;
+  const [bx, by, bz] = b;
+  const [cx, cy, cz] = c;
 
-  const sThe = sAtan2 < 0 ? sAtan2 + 2 : sAtan2;
-  const s = sThe / 2;
-  sMax = Math.min(s, sMax);
-  const t = Math.asin(position[1]) / Math.PI + 0.5;
-  tMax = Math.min(t, tMax);
-  texCoordsArray.push(vec2(s, t));
+  const aAngel = Math.atan2(ax, az) / Math.PI;
+  const aS = aAngel < 0 ? (aAngel + 2) / 2 : aAngel / 2;
+  const aT = Math.asin(ay) / Math.PI + 0.5;
+
+  const bAngel = Math.atan2(bx, bz) / Math.PI;
+  const bS = bAngel < 0 ? (bAngel + 2) / 2 : bAngel / 2;
+  const bT = Math.asin(by) / Math.PI + 0.5;
+
+  const cAngel = Math.atan2(cx, cz) / Math.PI;
+  const cS = cAngel < 0 ? (cAngel + 2) / 2 : cAngel / 2;
+  const cT = Math.asin(cy) / Math.PI + 0.5;
+
+  if (Math.abs(aS - bS) > 0.5 || Math.abs(bS - cS) > 0.5) {
+    console.log(a, b, c);
+  }
+
+  texCoordsArray.push(vec2(aS, aT));
+  texCoordsArray.push(vec2(bS, bT));
+  texCoordsArray.push(vec2(cS, cT));
 }
 
 function divideTriangle(a, b, c, count) {
@@ -119,7 +137,6 @@ window.onload = function init() {
   program = initShaders(gl, "vertex-shader", "fragment-shader");
   gl.useProgram(program);
   tetrahedron(va, vb, vc, vd, numTimesToSubdivide);
-  console.log(sMax, tMax);
   var vBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
